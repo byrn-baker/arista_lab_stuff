@@ -72,7 +72,7 @@ router bgp {{ underlay[inventory_hostname]['bgp']['asn'] }}
 {% endfor %}
 {% if underlay[inventory_hostname]['bgp']['dci_peers'] is defined %}
 {% for peer in underlay[inventory_hostname]['bgp']['dci_peers'] %}
-  neighbor {{ peer }} peer group LEAF_Peer
+  neighbor {{ peer }} peer group DCI_Underlay
 {% endfor %}
 {% endif %}
   redistribute connected route-map LOOPBACK
@@ -80,6 +80,9 @@ router bgp {{ underlay[inventory_hostname]['bgp']['asn'] }}
   address-family ipv4
    neighbor SPINE_Underlay activate
    neighbor LEAF_Peer activate
+{% if underlay[inventory_hostname]['bgp']['dci_peers'] is defined %}
+   neighbor DCI_Underlay activate
+{% endif %}
    redistribute connected route-map LOOPBACK
 {% elif 'dci' in inventory_hostname %}
   bgp listen range 192.168.0.0/16 peer-group LEAF_Underlay peer-filter LEAF-AS-RANGE
