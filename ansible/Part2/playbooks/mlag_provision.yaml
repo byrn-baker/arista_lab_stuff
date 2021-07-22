@@ -1,0 +1,13 @@
+---
+  - hosts: leafs_left, leafs_right
+    gather_facts: no
+    tasks:
+      - name: Upload mlag left config
+        eos_config:
+          src: "{{lookup('env','PWD')}}/templates/mlag_left.j2"
+        when: mlag_group == "left"
+
+      - name: Upload mlag right config
+        eos_config:
+          src: "{{lookup('env','PWD')}}/templates/mlag_right.j2"
+        when: mlag_group == "right"

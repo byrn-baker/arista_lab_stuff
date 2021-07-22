@@ -1,0 +1,15 @@
+---
+- hosts: DC1, DC2, DCI
+  gather_facts: no
+  tasks:
+  - name: Register variables
+    include_vars:
+      file: "{{lookup('env','PWD')}}/vars/underlay-DC1.yaml"
+      name: underlay
+  - name: Create a eBGP Underlay configuration for {{ inventory_hostname }}
+    template:
+      src: "{{lookup('env','PWD')}}/templates/BGP_underlay.j2"
+      dest: "{{lookup('env','PWD')}}/configs/{{inventory_hostname}}_underlay.cfg"
+  # - name: BGP Underlay configuration to {{ inventory_hostname }}
+  #   eos_config:
+  #     src: "{{lookup('env','PWD')}}/configs/{{inventory_hostname}}_underlay.cfg"
