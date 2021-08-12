@@ -1,6 +1,6 @@
 subnet 10.42.0.0 netmask 255.255.0.0 {
     range 10.42.0.200 10.42.0.250;
-    option routers 10.42.0.1;
+    option routers 10.42.0.2;
     option domain-name-servers 192.168.130.253;
     option bootfile-name "https://10.42.0.1/ztp/bootstrap";
 }

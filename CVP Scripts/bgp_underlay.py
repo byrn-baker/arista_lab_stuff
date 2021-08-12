@@ -1,45 +1,45 @@
 import json
 import requests
 from netaddr import *
-# from cvplibrary import CVPGlobalVariables, GlobalVariableNames
+from cvplibrary import CVPGlobalVariables, GlobalVariableNames
 
 # GraphQL query for Device data
 def nautobot_device():
-#   device_name = CVPGlobalVariables.getValue(GlobalVariableNames.CVP_SYSTEM_LABELS)
-#   for item in device_name:
-#     if item.startswith('hostname'):
-#       device = item.strip('hostname:')
-    url = "http://192.168.130.184:8000/api/graphql/"
-    # hostname = device.replace(":","")
-    payload = json.dumps({
-    "query": "query ($device: [String]) { devices(name__isw: $device){name config_context local_asn: cf_device_bgp viritual_router_mac: cf_virtual_router_mac tags {slug} site {vlans {name vid vxlan_rt: cf_vxlan_vlan_rt role {slug}}} interfaces {name role: cf_role virtual_router: cf_virtual_router_ipv4 vlan_vni: cf_vxlan_vlan_vni label description enabled mode lag {name} ip_addresses {address vrf {name rd}} connected_interface{device{name}name ip_addresses{address}}}}}",
-    "variables": {
-    "device": 'leaf1-dc1'
-    }
-    })
-    headers = {
-    'Content-Type': 'application/json',
-    'Authorization': 'Token c7fdc6be609a244bb1e851c5e47b3ccd9d990b58',
-    'Token': 'c7fdc6be609a244bb1e851c5e47b3ccd9d990b58'
-    }
+  device_name = CVPGlobalVariables.getValue(GlobalVariableNames.CVP_SYSTEM_LABELS)
+  for item in device_name:
+    if item.startswith('hostname'):
+        device = item.strip('hostname')
+        url = "http://192.168.130.50:8000/api/graphql/"
+        hostname = device.replace(":","")
+        payload = json.dumps({
+        "query": "query ($device: [String]) { devices(name__isw: $device){name config_context local_asn: cf_device_bgp viritual_router_mac: cf_virtual_router_mac tags {slug} site {vlans {name vid vxlan_rt: cf_vxlan_vlan_rt role {slug}}} interfaces {name role: cf_role virtual_router: cf_virtual_router_ipv4 vlan_vni: cf_vxlan_vlan_vni label description enabled mode lag {name} ip_addresses {address vrf {name rd}} connected_interface{device{name}name ip_addresses{address}}}}}",
+        "variables": {
+        "device": hostname
+        }
+        })
+        headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token c7fdc6be609a244bb1e851c5e47b3ccd9d990b58',
+        'Token': 'c7fdc6be609a244bb1e851c5e47b3ccd9d990b58'
+        }
 
-    response = requests.request("POST", url, headers=headers, data=payload, verify=False)
+        response = requests.request("POST", url, headers=headers, data=payload, verify=False)
 
-    data = response.content
-    output = json.loads(data)
+        data = response.content
+        output = json.loads(data)
 
-    nautobot_device.device = output['data']['devices']
+        nautobot_device.device = output['data']['devices']
     # print(json.dumps(output, indent=2))
     # print (device)
 
 # Query for Spine BGP
 def spine_devices():
-#   device_name = CVPGlobalVariables.getValue(GlobalVariableNames.CVP_SYSTEM_LABELS)
-#   for item in device_name:
-#     if item.startswith('hostname'):
-        # device = item.strip('hostname')
-        url = "http://192.168.130.184:8000/api/graphql/"
-        # hostname = device.replace(":","")
+  device_name = CVPGlobalVariables.getValue(GlobalVariableNames.CVP_SYSTEM_LABELS)
+  for item in device_name:
+    if item.startswith('hostname'):
+        device = item.strip('hostname')
+        url = "http://192.168.130.50:8000/api/graphql/"
+        hostname = device.replace(":","")
         payload = json.dumps({
         "query": "query ($device: [String]) { devices(name__isw: $device) { name local_asn: cf_device_bgp }}",
         "variables": {
@@ -61,14 +61,14 @@ def spine_devices():
         # print(json.dumps(output, indent=2))
         # print (device)
 
-# Query for Spine BGP
+# Query for DCI BGP
 def dci_devices():
-#   device_name = CVPGlobalVariables.getValue(GlobalVariableNames.CVP_SYSTEM_LABELS)
-#   for item in device_name:
-#     if item.startswith('hostname'):
-        # device = item.strip('hostname')
-        url = "http://192.168.130.184:8000/api/graphql/"
-        # hostname = device.replace(":","")
+  device_name = CVPGlobalVariables.getValue(GlobalVariableNames.CVP_SYSTEM_LABELS)
+  for item in device_name:
+    if item.startswith('hostname'):
+        device = item.strip('hostname')
+        url = "http://192.168.130.50:8000/api/graphql/"
+        hostname = device.replace(":","")
         payload = json.dumps({
          "query": "query ($device: [String]) { devices(name__isw: $device) { name local_asn: cf_device_bgp }}",
         "variables": {
@@ -98,8 +98,24 @@ dci_devices()
 dci_device = dci_devices.device
 
 # Interfaces
-print("service routing protocols model multi-agent")
-print("!")
+if "leaf1" in device[0]['name'] or "leaf3" in device[0]['name'] or "borderleaf1" in device[0]['name']:
+    print("spanning-tree mode mstp\n"
+          "!\n"
+          "no spanning-tree vlan-id 4094\n"
+          "!\n"
+          "vlan 4094\n"
+          "  trunk group MLAGPEER")
+    print("!")
+    
+elif "leaf2" in device[0]['name'] or "leaf4" in device[0]['name'] or "borderleaf2" in device[0]['name']:
+    print("spanning-tree mode mstp\n"
+          "!\n"
+          "no spanning-tree vlan-id 4094\n"
+          "!\n"
+          "vlan 4094\n"
+          "  trunk group MLAGPEER")
+    print("!")
+    
 for iface in device[0]['interfaces']:
     if "Ethernet" in iface['name']:
         if iface['label'] == 'Layer3':
@@ -121,6 +137,11 @@ for iface in device[0]['interfaces']:
             print(" ip address %s" % (ip['address']))
             print("!")
     if "Port-Channel" in iface['name']:
+        if iface['label'] == 'mlag':
+            print("interface %s" % (iface['name']))
+            print(" switchport mode trunk\n"
+            "  switchport trunk group MLAGPEER")
+            print("!")
         if iface['label'] == 'trunk':
             print("interface %s" % (iface['name']))
             print(" switchport mode trunk")
@@ -131,23 +152,44 @@ for iface in device[0]['interfaces']:
             for ip in iface['ip_addresses']:  
                 print(" ip address %s" % (ip['address']))
             print("!")
-    if "Vlan" in iface['name']:
+    if "Vlan4094" in iface['name'] and iface['label'] != "Layer3":
         print("interface %s" % (iface['name']))
-        for ip in iface['ip_addresses']:  
+        for ip in iface['ip_addresses']:
+            print("  description MLAG PEER LINK")  
             print(" ip address %s" % (ip['address']))
             print("!")
+
+#MLAG Config
+if "leaf1" in device[0]['name'] or "leaf3" in device[0]['name'] or "borderleaf1" in device[0]['name']:
+    print("mlag configuration\n"
+          "  domain-id MLAG\n"
+          "  local-interface Vlan4094\n"
+          "  peer-address 192.168.255.2\n"
+          "  peer-link Port-Channel10")
+    print("!")      
+    
+elif "leaf2" in device[0]['name'] or "leaf4" in device[0]['name'] or "borderleaf2" in device[0]['name']:
+    print("mlag configuration\n"
+          "  domain-id MLAG\n"
+          "  local-interface Vlan4094\n"
+          "  peer-address 192.168.255.1\n"
+          "  peer-link Port-Channel10")
+    print("!")      
 
 #Prefix List
 for prefix in device[0]['config_context']['prefix_list']:
     print("ip prefix-list LOOPBACK permit %s" % (prefix))
+    print("!")
 if 'spine' in device[0]['name'] or 'dci' in device[0]['name']:    
     print ("route-map LOOPBACK permit 10\n"
             "  match ip address prefix-list LOOPBACK\n"
             "  peer-filter LEAF-AS-RANGE\n"
             "  10 match as-range 65000-65535 result accept")
+    print("!")        
 if 'leaf' in device[0]['name']:
     print ("route-map LOOPBACK permit 10\n"
         " match ip address prefix-list LOOPBACK")
+    print("!")    
 print("router bgp %s" % (device[0]["local_asn"]))
 for iface in device[0]['interfaces']:
     if 'Loopback0' in iface['name']:
@@ -191,10 +233,10 @@ for iface in device[0]['interfaces']:
             ip = IPNetwork(ip['address'])
             peer = (ip.ip)
             print("   neighbor %s peer group SPINE_UNDERLAY" % (peer))
-try:
-    print("   neighbor %s peer group LEAF_Peer" % (device[0]['config_context']['bgp']['leaf_peer']))
-except Exception:
-    pass
+if "leaf1" in device[0]['name'] or "leaf3" in device[0]['name'] or "borderleaf1" in device[0]['name']:
+    print("   neighbor 192.168.255.2 peer group LEAF_Peer")
+elif "leaf2" in device[0]['name'] or "leaf4" in device[0]['name'] or "borderleaf2" in device[0]['name']:
+    print("   neighbor 192.168.255.1 peer group LEAF_Peer")
 for iface in device[0]['interfaces']:
     if iface['role'] == 'dci':
         for ip in iface['connected_interface']['ip_addresses']:
@@ -206,15 +248,11 @@ print("   address-family ipv4")
 if 'spine' in device[0]['name']:
     print("     neighbor LEAF_UNDERLAY activate")
     print("     redistribute connected route-map LOOPBACK")
-if 'leaf' in device[0]['name']:
+if "leaf1" in device[0]['name'] or "leaf2" in device[0]['name'] or "leaf3" in device[0]['name'] or "leaf4" in device[0]['name']:
     print("     neighbor SPINE_UNDERLAY activate")
     print("     neighbor LEAF_Peer activate")
-    try:
-        if device[0]['config_context']['bgp']['dci_asn']:
-            print("     neighbor DCI_UNDERLAY activate")
-    except Exception:
-        pass
-    print("     redistribute connected route-map LOOPBACK")
+if "borderleaf1" in device[0]['name'] or "borderleaf2" in device[0]['name']:
+  print("     neighbor DCI_UNDERLAY activate")
 if 'dci' in device[0]['name']:
-    print("     neighbor BORDERLEAF_UNDERLAY activate\n"
-        "     redistribute connected route-map LOOPBACK")
+    print("     neighbor BORDERLEAF_UNDERLAY activate")
+print("     redistribute connected route-map LOOPBACK")
