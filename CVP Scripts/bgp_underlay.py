@@ -39,11 +39,17 @@ def spine_devices():
     if item.startswith('hostname'):
         device = item.strip('hostname')
         url = "http://192.168.130.50:8000/api/graphql/"
-        hostname = device.replace(":","")
+        spine = device.replace(":","")
+        ltr1 = spine[-3]
+        ltr2 = spine[-2]
+        ltr3 = spine[-1]
+        dc = []
+        dc = str.join('', ltr1) + str.join('', ltr2) + str.join('', ltr3)
+        hostname = f"spine1-{dc}"
         payload = json.dumps({
         "query": "query ($device: [String]) { devices(name__isw: $device) { name local_asn: cf_device_bgp }}",
         "variables": {
-        "device": "spine1"
+        "device": hostname
         }
         })
         headers = {
@@ -72,7 +78,7 @@ def dci_devices():
         payload = json.dumps({
          "query": "query ($device: [String]) { devices(name__isw: $device) { name local_asn: cf_device_bgp }}",
         "variables": {
-        "device": "dci1"
+        "device": "dci"
         }
         })
         headers = {
