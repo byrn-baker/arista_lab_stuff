@@ -39,13 +39,13 @@ def spine_devices():
     if item.startswith('hostname'):
         device = item.strip('hostname')
         url = "http://192.168.130.50:8000/api/graphql/"
-        spine = device.replace(":","")
-        ltr1 = spine[-3]
-        ltr2 = spine[-2]
-        ltr3 = spine[-1]
+        query = device.replace(":","")
+        ltr1 = query[-3]
+        ltr2 = query[-2]
+        ltr3 = query[-1]
         dc = []
         dc = str.join('', ltr1) + str.join('', ltr2) + str.join('', ltr3)
-        hostname = f"spine1-{dc}"
+        hostname = "spine1" + "-" + dc
         payload = json.dumps({
         "query": "query ($device: [String]) { devices(name__isw: $device) { name local_asn: cf_device_bgp }}",
         "variables": {
@@ -208,28 +208,28 @@ print("   no bgp default ipv4-unicast\n"
 if 'spine' in device[0]['name']:
     print("   bgp listen range 10.0.0.0/16 peer-group LEAF_UNDERLAY peer-filter LEAF-AS-RANGE\n"
         "   neighbor LEAF_UNDERLAY peer group\n"
-        "   neighbor LEAF_UNDERLAY send-community\n"
+        "   neighbor LEAF_UNDERLAY send-community extended\n"
         "   neighbor LEAF_UNDERLAY maximum-routes 12000")
 if 'dci' in device[0]['name']:
     print("   bgp listen range 10.0.0.0/16 peer-group BORDERLEAF_UNDERLAY peer-filter LEAF-AS-RANGE\n"
         "   neighbor BORDERLEAF_UNDERLAY peer group\n"
-        "   neighbor BORDERLEAF_UNDERLAY send-community\n"
+        "   neighbor BORDERLEAF_UNDERLAY send-community extended\n"
         "   neighbor BORDERLEAF_UNDERLAY maximum-routes 12000")
 if 'leaf' in device[0]['name']:
     print("   neighbor SPINE_UNDERLAY peer group")
     print("   neighbor SPINE_UNDERLAY remote-as %s" % (spine_device[0]['local_asn']))
-    print("   neighbor SPINE_UNDERLAY send-community\n"
+    print("   neighbor SPINE_UNDERLAY send-community extended\n"
         "   neighbor SPINE_UNDERLAY maximum-routes 12000")
     print("   neighbor LEAF_Peer peer group")
     print("   neighbor LEAF_Peer remote-as %s" % (device[0]["local_asn"]))
     print("   neighbor LEAF_Peer next-hop-self\n"
-            "   neighbor LEAF_Peer send-community\n"
+            "   neighbor LEAF_Peer send-community extended\n"
             "   neighbor LEAF_Peer maximum-routes 12000")
 try:
     if 'borderleaf' in device[0]['name']:
         print("   neighbor DCI_UNDERLAY peer group")
         print("   neighbor DCI_UNDERLAY remote-as %s" % dci_device[0]['local_asn'])
-        print("   neighbor DCI_UNDERLAY send-community\n"
+        print("   neighbor DCI_UNDERLAY send-community extended\n"
             "   neighbor DCI_UNDERLAY maximum-routes 12000")
 except Exception:
     pass
